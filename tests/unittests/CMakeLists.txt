@@ -28,6 +28,16 @@ target_link_libraries(
 add_executable(causalmask
     test_casual_mask.cu
 )
+
+# # 替代方式1: 使用 find_package
+# find_package(CUDA REQUIRED)
+# target_link_libraries(test_mask_softmax PUBLIC ${CUDA_LIBRARIES})
+
+# # 替代方式2: 直接指定库名(不加 -l)
+# target_link_libraries(test_mask_softmax PUBLIC 
+#     cudart      # 而不是 -lcudart
+#     cudadevrt   # 而不是 -lcudadevrt
+#     mask_softmax)
 target_link_libraries(  # Libs for test_build_casual_mask
    causalmask PUBLIC
     -lcudart

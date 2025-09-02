@@ -1,3 +1,4 @@
+// 这个是最重要的
 #pragma once
 #include <vector>
 #include <unordered_map>
@@ -27,6 +28,7 @@ enum DataType
     UNSUPPORTED
 };
 
+// 返回DataType
 template<typename T>
 DataType getTensorType()
 {
@@ -52,6 +54,9 @@ DataType getTensorType()
         return UNSUPPORTED;
     }
 }
+
+// 像函数一样前向声明
+// 前向声明模板类，但是没有定义，告诉编译器之后会有一个实际的模板类
 template<typename T>
 class TensorWrapper;
 
@@ -82,6 +87,8 @@ struct Tensor {
 //            data = nullptr;
 //        }
 //    }
+
+    // as是下行转换
     template<typename T>
     TensorWrapper<T>* as(){
         return static_cast<TensorWrapper<T>*>(this);

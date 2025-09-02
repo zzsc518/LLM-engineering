@@ -41,8 +41,12 @@ inline __device__ half2 scalar_cast_vec<half2, half>(half val)
 template<typename T>
 struct Vec {
     using Type = T;
+    // 静态编译器常量
+    // 静态表示属于整个类而不是类的某个实例
+    // constexpr表示这个是一个编译时常量，在编译时就可以确定，编译器可以进行优化
     static constexpr int size = 0;
 };
+
 template<>
 struct Vec<half> {
     using Type = half2; 

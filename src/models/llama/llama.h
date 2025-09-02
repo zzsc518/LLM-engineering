@@ -93,13 +93,15 @@ public:
           cublasWrapper* cublas_wrapper,
           BaseAllocator* allocator,
           cudaDeviceProp* cuda_device_prop):
-    BaseModel(stream, cublas_wrapper, allocator, cuda_device_prop),
+    /*派生类的列表初始化首先要调用父类的构造函数*/
+          BaseModel(stream, cublas_wrapper, allocator, cuda_device_prop),
     head_num(head_num),
     kv_head_num(kv_head_num),
     head_size(head_size),
     inter_size(inter_size),
     num_layers(num_layers),
     vocab_size(vocab_size),
+    /*可以不按照Llama构造函数参数的顺序来*/
     vocab_size_padded(vocab_size),
     hidden_units(head_num * head_size),
     max_seq_len(max_seq_len) {
@@ -164,6 +166,7 @@ public:
 
     std::string MakeHistory(const std::string &history, int round, const std::string &input, const std::string &output); // 根据当前轮次回复更新history
     // single request response
+    // 回调函数
     std::string Response(const std::vector<std::string>& input, CallBack PrintRes);
 
     int MakeOutput();

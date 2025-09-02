@@ -5,7 +5,8 @@
 #include <string>      // std::string
 #include <vector>      // std::vector
 #include <random>
-
+ 
+// 这几个头文件需要包含
 #include <cuda.h>
 #include <cuda_fp16.h>
 #include <cuda_runtime.h>
@@ -64,7 +65,10 @@ bool checkResults(float* h_output, float* d_output, const int output_size) {
 }
 
 int main(int argc, char *argv[]) {
+    
+    // 自定义的 
     const int max_context_token_num = 64;
+    // 对齐llama的定义
     const int hidden_size = 4096;
     const int vocab_size = 30000;
     const int input_size = max_context_token_num;
@@ -72,6 +76,8 @@ int main(int argc, char *argv[]) {
     const int output_size = max_context_token_num * hidden_size;
 
     int* h_input = (int*) malloc(input_size * sizeof(int));
+    // 参数是为了测试fp32和fp16
+    // fp32
     if (argv[1]) {
         float* h_table = (float*) malloc(table_size * sizeof(float));
         float* h_output = (float*) malloc(output_size * sizeof(float));
@@ -124,7 +130,7 @@ int main(int argc, char *argv[]) {
         free(h_output);
         free(h_table);
         free(h_input);
-    } else {
+    } else { // fp16
         half* h_table = (half*) malloc(table_size * sizeof(half));
         half* h_output = (half*) malloc(output_size * sizeof(half));
 

@@ -15,9 +15,11 @@ __global__ void BuildCausalMasksConsideringContextPastKV(T* mask,
     while (offset < max_q_len * max_k_len){
         int q = offset / max_k_len;
         int k = offset % max_k_len;
+        // 没有上下文的时候是k<=q就行，但是加上上下文的话就要加klen-qlen
         bool is_one = q < qlen && k < klen && k <= q + (klen - qlen) && k >= klen - qlen;
         mask[offset] = static_cast<T>(is_one);
 
+        // 为了256个能够处理完所有的，一般都是加线程数量
         offset += blockDim.x;
     }
 }

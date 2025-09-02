@@ -11,6 +11,7 @@
 // lmhead linear: [bs, q hidden units] * [vocab size, q hiden units], need transpose B
 // gate:[bs/token nums, q hidden units] * [q hidden units, inter size] = [bs/token nums, inter size]
 // up:[bs/token nums, q hidden units] * [q hidden units, inter size] = [bs/token nums, inter size]
+// prefill时就是token nums，decoding的时候就是bs
 // fusedGateUpGemm: [bs/token nums, q hidden units] * [q hidden units, 2 * inter size] = [bs/token nums, 2 * inter size]
 // down:[bs/token nums, inter size] * [q hidden units, inter size] = [bs/token nums, q hidden units]
 template <typename T>

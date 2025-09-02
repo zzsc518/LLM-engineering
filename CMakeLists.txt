@@ -1,3 +1,4 @@
+# 泛化的
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 project(oneLLM LANGUAGES CXX CUDA)
 
@@ -47,22 +48,27 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# 头文件
 set(COMMON_HEADER_DIRS
   ${PROJECT_SOURCE_DIR}
   ${CUDA_PATH}/include
 )
 
+# lib
 set(COMMON_LIB_DIRS
   ${CUDA_PATH}/lib64
 )
 
+# 添加头文件目录
 include_directories(
   ${COMMON_HEADER_DIRS}
 )
 
+# 添加库目录
 link_directories(
   ${COMMON_LIB_DIRS}
 )
+
 option (PERF
   "measure model inference performance"
   OFF
@@ -88,17 +94,28 @@ endif()
 #cmake .. -DPRINT_DATA=ON -DSAVE_DATA=ON && make
 #cmake .. -DPERF=ON && make
 #cmake .. && make
+
+# 全局搜索并赋给LLM_CXX_SOURCES
 file(GLOB_RECURSE LLM_CXX_SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/src/*.cc)
 file(GLOB_RECURSE LLM_CUDA_SOURCES ${PROJECT_SOURCE_DIR}/src/*.cu)
 
+# OBJECT表示库不会被链接成.a或者.so，而是会编译生成变成.o
+# 只会生成一组目标文件.o，这些目标文件是源代码经过编译但未链接的中间产物
+# 注意是一组而不是一个.o
+# 除了OBJECT，还有STATIC和SHARED
 add_library(llmengine OBJECT
            ${LLM_CXX_SOURCES}
            ${LLM_CUDA_SOURCES}
            )
 
+# 编译子目录
+# 会递归地查找并处理这两个子目录下的 CMakeLists.txt 文件。
 add_subdirectory(src)
 add_subdirectory(tests)
 # add_subdirectory(examples)
 
+# 构建一个叫main的可执行文件，user_entry.cpp是main函数的入口
 add_executable(main user_entry.cpp)
+
+# 给可执行文件链接库
 target_link_libraries(main PUBLIC -lcublas -lcudart -lcudadevrt llmengine)

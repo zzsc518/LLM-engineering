@@ -30,7 +30,7 @@ public:
     void loadWeights();
 
     LayerNormWeight<T> attn_norm_weight;
-    LayerNormWeight<T> ffn_norm_weight;
+    LayerNormWeight<T> ffn_norm_weight; 
     LLaMAattentionWeights<T> self_attn_weight;
     LLaMAFFNWeights<T> ffn_weight;
 };

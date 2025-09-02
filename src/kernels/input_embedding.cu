@@ -8,6 +8,7 @@ __global__ void embeddingFunctor(const int* input_ids,
                const int max_context_token_num,
                const int hidden_size)
 {
+    // 一个线程做的事情是针对于输出的shape定的，gemm也是这样的
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     while (index < max_context_token_num * hidden_size) {
         int id = input_ids[index / hidden_size];
@@ -16,6 +17,7 @@ __global__ void embeddingFunctor(const int* input_ids,
     }
 }
 
+// [token num] ===> [token num, hidden_size]
 template<typename T>
 void launchInputEmbedding(TensorWrapper<int>* input_ids,    // INT [token num]
                           TensorWrapper<T>* output,       // FP32 [token num, hidden_size] = [token num, 4096]
@@ -24,6 +26,7 @@ void launchInputEmbedding(TensorWrapper<int>* input_ids,    // INT [token num]
     const int blockSize = 256;
     const int max_context_token_num = output->shape[0]; // token num
     const int hidden_size = output->shape[1];
+    // 为什么是2048
     const int gridSize = 2048;
     LLM_CHECK_WITH_INFO(max_context_token_num == input_ids->shape[0], "input ids 1st shape should equal to 1st shape of output");
     embeddingFunctor<T><<<gridSize, blockSize>>>(input_ids->data,
