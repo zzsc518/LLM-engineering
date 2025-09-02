@@ -36,6 +36,10 @@ private:
     TensorWrapper<T>*  qk_buf = nullptr;
     TensorWrapper<T>*  qkv_buf_w_pad = nullptr;
     TensorWrapper<T>*  qkv_buf_wo_pad_1 = nullptr;      
+    
+    // 加上flashattention要用的l和m的buf
+    TensorWrapper<T>*  flashAttn_l = nullptr;
+    TensorWrapper<T>*  flashAttn_m = nullptr;
 
 public:
     LLaMAContextAttentionLayer(int head_num,

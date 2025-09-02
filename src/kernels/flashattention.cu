@@ -17,7 +17,7 @@
 // 计算和访存的逻辑可以分开，这里loadKV是让一个线程去load一行
 // 因为loadKV是一个线程去load一行，而在计算中一个线程是要用到K的一行，和V的一列，这V是需要用到别的线程load的，所以内层循环需要__syncthreads()，是有冲突所以才会需要__syncthreads()
 // 而loadQ就是一个线程去load Q的一行
-__global__ void forward_kernel(const float* Q, const float* K, const float* V, const int N, const int d, const int Tc, const int Tr,
+__global__ void FlashAttention(const float* Q, const float* K, const float* V, const int N, const int d, const int Tc, const int Tr,
     const int Bc, const int Br, const float softmax_scale, float* l, float* m, float* o){
         int bx = blockIdx.x; int by = blockIdx.y;
         int tx = threadIdx.x;
@@ -137,11 +137,17 @@ __global__ void forward_kernel(const float* Q, const float* K, const float* V, c
 
 // qk的buffer应该去掉，新建一个l,m的buffer，在context_attention.cpp里面的allocator搞，allocated一份，然后把B，nh，N，d都拿出来
 // 然后加一点check的信息，必须要能整除
+// qkv就是o，还需要加上l和m，flashAttn_l和flashAttn_m
+
+// max_q_len和max_k_len?
 template <typename T>
-void launchFlashAttention(TensorWrapper<T> *q, TensorWrapper<T> *k, TensorWrapper<T> *v, TensorWrapper<T> *qk
+void launchFlashAttention(TensorWrapper<T> *q, TensorWrapper<T> *k, TensorWrapper<T> *v, 
                                TensorWrapper<T> qkv, TensorWrapper<T> *mask,
                                float scale)
 {
-    dim3 grid();
-    dim3 block();
+    const int B = q->shape[0]; const int nh = q->shape[1];
+    const int N = q->shape[2]; const int d = q->shape[3];
+    dim3 grid(B, nh);
+    dim3 block(32); // 这里先写死32，后面可以改成动态的
+    FlashAttention<<<grid, block>>>()
 }

@@ -44,6 +44,11 @@ void LLaMAContextAttentionLayer<T>::allocForForward(LLaMAAttentionDynParams& par
     qk_buf = new TensorWrapper<T>(Device::GPU, type, {batch_size, head_num, max_q_len, max_k_len});
     //qk * v
     qkv_buf_w_pad = new TensorWrapper<T>(Device::GPU, type, {batch_size, head_num, max_q_len, head_size});
+
+    // for flash attention l and m buf
+    flashAttn_l = new TensorWrapper<T>(Device::GPU, type, {batch_size, head_num, max_q_len});
+    flashAttn_m = new TensorWrapper<T>(Device::GPU, type, {batch_size, head_num, max_q_len});
+    
     //remove padding
     qkv_buf_wo_pad_1 = new TensorWrapper<T>(Device::GPU, type, {num_tokens, head_num, head_size});
     
