@@ -52,6 +52,10 @@ void LLaMAContextAttentionLayer<T>::allocForForward(LLaMAAttentionDynParams& par
     //remove padding
     qkv_buf_wo_pad_1 = new TensorWrapper<T>(Device::GPU, type, {num_tokens, head_num, head_size});
     
+    // 实际分配内存
+    flashAttn_l->data = allocator->Malloc(flashAttn_l->data, sizeof(T) * batch_size * head_num * max_q_len, false);
+    flashAttn_m->data = allocator->Malloc(flashAttn_m->data, sizeof(T) * batch_size * head_num * max_q_len, false);
+
     qkv_buf_wo_pad->data = allocator->Malloc(qkv_buf_wo_pad->data, sizeof(T) * num_tokens * qkv_head_num * head_size, false);
     q_buf_w_pad->data = allocator->Malloc(
         q_buf_w_pad->data, sizeof(T) * qkv_head_num * batch_size * max_q_len * head_size, false);

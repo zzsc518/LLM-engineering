@@ -140,14 +140,30 @@ __global__ void FlashAttention(const float* Q, const float* K, const float* V, c
 // qkv就是o，还需要加上l和m，flashAttn_l和flashAttn_m
 
 // max_q_len和max_k_len?
+// 不能n是不是能整除Bc和Br，n的shape是多少不知道
 template <typename T>
-void launchFlashAttention(TensorWrapper<T> *q, TensorWrapper<T> *k, TensorWrapper<T> *v, 
-                               TensorWrapper<T> qkv, TensorWrapper<T> *mask,
-                               float scale)
+void launchFlashAttention(TensorWrapper<T> *q, TensorWrapper<T> *k, TensorWrapper<T> *v, TensorWrapper<T> *l, 
+        TensorWrapper<T> *m, TensorWrapper<T> qkv, TensorWrapper<T> *mask,float scale)
 {
+    const int Bc = 32; const int Br = 32;
     const int B = q->shape[0]; const int nh = q->shape[1];
     const int N = q->shape[2]; const int d = q->shape[3];
+
+    const int Tc = ceil((float) N / Bc); const int Tr = ceil((float) N / Br);
+
+    const int sram_size = (3 * Bc * d * sizeof(float)) + (Bc * Br * sizeof(float));
+
+    int max_sram_size;
+    // TODO：需要check下，不能超过max_sram_size
+    cudaDeviceGetAttribute(&max_sram_size, cudaDevAttrMaxSharedMemoryPerBlock, 0);
+    printf("Max shared memory: %d, requested shared memory: %d \\n", max_sram_size, sram_size);
+    
     dim3 grid(B, nh);
-    dim3 block(32); // 这里先写死32，后面可以改成动态的
-    FlashAttention<<<grid, block>>>()
+    dim3 block(Bc); // 这里先写死32，后面可以改成动态的
+    FlashAttention<<<grid, block, sram_size>>>(q, k, v, N, d, Tc, Tr, Bc, Br, scale, l, m, qkv);
+#ifdef PRINT_DATA
+    printf("FlashAttention top2 result:\n");
+    print_data<<<1, 1>>>(qkv->data);
+#else
+#endif
 }
