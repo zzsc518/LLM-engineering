@@ -90,6 +90,7 @@ public:
             // 没找到空闲的再cudaMalloc，并插进block pool
             void* new_buffer;
             cudaMalloc(&new_buffer, size);
+            // 感觉需要加上memset，防止有些kernel里用到未初始化的buf
             total_allocated_size += size;
             // std::cout << "allocate a new big block from OS using cudaMalloc, size = "
             //                                     << size << "B, total allocated size " << total_allocated_size << "B"
