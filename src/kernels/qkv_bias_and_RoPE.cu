@@ -113,6 +113,7 @@ __global__ void add_fusedQKV_bias_transpose_kernel(T *q_buf,
                                                    T *QKV,
                                                    /*optional*/const T *qkv_bias,
                                                    const int *padding_offset, // created before qkv linear
+                                                   // 每个batch的历史长度
                                                    const int *history_length,
                                                    const int *input_length, // actual length of each seq
                                                    const int batch_size,
@@ -134,17 +135,26 @@ __global__ void add_fusedQKV_bias_transpose_kernel(T *q_buf,
     int tid = threadIdx.x;
     int token_padding_offset = padding_offset[token_id];
     // 1. prapare rebuilding , do rebuild padding and transpose when store
+    // 为了输出的
     int dst_token_id = token_id + token_padding_offset; // token id after rebuild padding
 
     int batch_id = dst_token_id / seq_len;       // seqlen is max_seq_len for padding used to unify all seq's length
     int local_token_id = dst_token_id % seq_len; // 每个seq中的局部token id
     // 2. bias add
-    int qkv_head_num = head_num + 2 * kv_head_num;
+    int qkv_head_num = head_num + 2 * kv_head_num;  
+    // 当前线程访问的是哪个token，哪个head 
     int q_id = token_id * qkv_head_num * head_size + head_id * head_size + tid;
+    // head_num是qhead_num, 要跨过q的偏移
     int k_id = token_id * qkv_head_num * head_size + head_id * head_size + tid + head_num * head_size;
+    // qkvuhiddenunits是连续的
+    // 要跨过qk的偏移
     int v_id = token_id * qkv_head_num * head_size + head_id * head_size + tid + head_num * head_size + kv_head_num * head_size;
 
-    float v = QKV[v_id];
+    // 为了GQA，不然会越界
+    if(head_id < kv_head_num){
+        float v = QKV[v_id];
+    }
+
     int dst_q_id = batch_id * seq_len * head_num * head_size +
                    head_id * seq_len * head_size +
                    local_token_id * head_size + tid;
@@ -159,6 +169,7 @@ __global__ void add_fusedQKV_bias_transpose_kernel(T *q_buf,
     // 3. RoPE
     const int cur_seq_history_len = history_length[batch_id];
     const int context_length = cur_seq_history_len + input_length[batch_id];
+
     //（RussWong)note: 多轮对话下要结合history length求得全局的cos和sin
     const int timestep = cur_seq_history_len + local_token_id; 
     // (RussWong)note: timestep为cos(m*theta)中的m
@@ -180,7 +191,10 @@ __global__ void add_fusedQKV_bias_transpose_kernel(T *q_buf,
     //    printf("cos: %f, sin:%f\n", cos_sin.x, cos_sin.y);
     //}
     float2 q_rotate = GetRoPEres(QKV[q_id], QKV[q_id + head_size / 2], cos_sin);
-    float2 k_rotate = GetRoPEres(QKV[k_id], QKV[k_id + head_size / 2], cos_sin);
+    // GQA这里会越界
+    if(head_id < kv_head_num){
+        float2 k_rotate = GetRoPEres(QKV[k_id], QKV[k_id + head_size / 2], cos_sin);
+    }
     // (RussWong)note: write result back into q k v
     q_buf[dst_q_id] = q_rotate.x;
     q_buf[dst_q_id + head_size / 2] = q_rotate.y;
